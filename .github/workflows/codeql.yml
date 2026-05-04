@@ -99,22 +99,21 @@ jobs:
       uses: github/codeql-action/analyze@v4
       with:
         category: "/language:${{matrix.language}}"
+        output: ${{ runner.temp }}/codeql-results
   
-    - name: GitHub Advanced Security Metrics Report
-  # You may pin to the exact commit or the version.
-  # uses: theztefan/ghas-metrics-report@8b17c3b927129889c1809dd95cdb00b090a01503
-      uses: theztefan/ghas-metrics-report@v1.2.1
+    - name: Generate Security Report
+      uses: rsdmike/github-security-report-action@v3.0.4
       with:
-        # The team to generate the report for. Provide it to run the action on all repositories the team is an admin of.
-        team: # optional
-        # The repository to generate the report for. Provide it to run the action on a repository level for a given org.
-        repo: # optional
-        # The organisation to generate the report for. If you only provide org, the action will run on an organisation level.
-        org: # default is advanced-security-demo
-        # The GHAS features enabled on the repo to generate the report for
-        features: # default is dependabot, code-scanning, secret-scanning
-        # The frequency of the report. Can be daily, weekly or monthly
-        frequency: # default is weekly
-        # The output format of the report. Can be json, pdf or Issues
-        output-format: # default is json, pdf, issues
-          
+        token: ${{ secrets.SECURITY_TOKEN }}
+        sarifReportDir: ${{ runner.temp }}/codeql-results
+        outputDir: ${{ runner.temp }}/security-report
+        repository: ${{ github.repository }}
+
+    - name: Upload CodeQL SARIF and PDF reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: codeql-security-report-${{ matrix.language }}
+        path: |
+          ${{ runner.temp }}/codeql-results
+          ${{ runner.temp }}/security-report
+        if-no-files-found: error
