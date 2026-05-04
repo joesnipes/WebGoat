@@ -99,9 +99,21 @@ jobs:
       uses: github/codeql-action/analyze@v4
       with:
         category: "/language:${{matrix.language}}"
+        output: ${{ runner.temp }}/codeql-results
   
     - name: Generate Security Report
-      uses: peter-murray/github-security-report-action@v2
+      uses: rsdmike/github-security-report-action@v3.0.4
       with:
-          token: ${{ secrets.SECURITY_TOKEN }}
-          
+        token: ${{ secrets.SECURITY_TOKEN }}
+        sarifReportDir: ${{ runner.temp }}/codeql-results
+        outputDir: ${{ runner.temp }}/security-report
+        repository: ${{ github.repository }}
+
+    - name: Upload CodeQL SARIF and PDF reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: codeql-security-report-${{ matrix.language }}
+        path: |
+          ${{ runner.temp }}/codeql-results
+          ${{ runner.temp }}/security-report
+        if-no-files-found: error
